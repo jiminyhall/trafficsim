@@ -17,6 +17,25 @@ Graph.prototype.addVertex = function(id, x, y) {
   this.edges[id] = [];
 }
 
+/* Traverse from one point to another, returning all available paths */
+Graph.prototype.pathsFromTo = function(vertexA, vertexB, next, history) {
+  // if the next vertex matches the target then return that list
+  if(next===vertexB)
+    return history.push(next);
+  // if the next is empty then there is no further to go, return the half finished path
+  else if(next===[])
+    return history;
+  else {
+      var queue = this.edges[next];
+      history.push(next);
+      while(queue.length) {
+        var qi = queue.shift();
+        this.pathsFromTo(vertexA, vertexB, qi, history);
+      }
+  }
+}
+
+
 Graph.prototype.print = function() {
   console.log(this.vertices.map(function(v) {
     return (v.id + ' -> ' + this.edges[v.id].join(', ')).trim();
