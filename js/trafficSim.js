@@ -17,23 +17,31 @@ Graph.prototype.addVertex = function(id, x, y) {
   this.edges[id] = [];
 }
 
+Graph.prototype.pathFromTo = function(vA, vB, ) {
+  var hist = [];
+  var next = this.edges[vA]
+}
+
 /* Traverse from one point to another, returning all available paths */
-Graph.prototype.pathsFromTo = function(vertexA, vertexB, next, history) {
-  // if the next vertex matches the target then return that list
-  if(next===vertexB)
-    return history.push(next);
-  // if the next is empty then there is no further to go, return the half finished path
-  else if(next===[])
+Graph.prototype.pathsFromTo = function(v, vertexB, history) {
+  // cache this function so the callback function works
+  var self = this;
+  // add the current vertext to the history
+  history.push(v);
+  // if we've reached the target then return the history and stop recursing
+  if(v===vertexB)
     return history;
   else {
-      var queue = this.edges[next];
-      history.push(next);
-      while(queue.length) {
-        var qi = queue.shift();
-        this.pathsFromTo(vertexA, vertexB, qi, history);
-      }
+    // create a queue using all the edges which have not been visited
+    var q = this.edges[v].filter(function(el) { return !history.includes(el); });
+    // recurse on each element in the queue
+    if(q.length<1)
+      return [];
+    else
+      q.forEach(function(el) { self.pathsFromTo(el, vertexB, history); });
   }
 }
+
 
 
 Graph.prototype.print = function() {
