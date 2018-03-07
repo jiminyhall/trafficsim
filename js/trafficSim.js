@@ -17,9 +17,25 @@ Graph.prototype.addVertex = function(id, x, y) {
   this.edges[id] = [];
 }
 
-Graph.prototype.pathFromTo = function(vA, vB, ) {
-  var hist = [];
-  var next = this.edges[vA]
+Graph.prototype.pathFromTo = function(vA, vB, hist) {
+  console.log(vA + " to " + vB + " hist: " + hist);
+  this.hist = hist;
+  var self=this;
+  hist.push(vA);
+  var queue = this.edges[vA].filter(function(el) {return !hist.includes(el); });
+  if(vA===vB) {
+    console.log("Reached goal: " + self.hist);
+    return self.hist.slice(0);
+  }
+
+  if(queue.length<1) {
+    console.log("No more edges: " + self.hist);
+    return self.hist.slice(0);
+  }
+
+  self.hist.push(queue.forEach(function(el) { self.pathFromTo(el, vB, self.hist.slice(0)); }));
+  return self.hist;
+
 }
 
 /* Traverse from one point to another, returning all available paths */
