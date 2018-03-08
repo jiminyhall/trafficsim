@@ -1,6 +1,7 @@
 function Graph() {
   this.vertices = [];
   this.edges = [];
+  this.paths = []; // this is the paths from end node to end node
   this.numberOfEdges = [];
   this.idCnt=0;
   this.selected = -1;
@@ -17,24 +18,51 @@ Graph.prototype.addVertex = function(id, x, y) {
   this.edges[id] = [];
 }
 
-Graph.prototype.pathFromTo = function(vA, vB, hist) {
-  console.log(vA + " to " + vB + " hist: " + hist);
-  this.hist = hist;
+Graph.prototype.getByID = function(id) {
+  return this.vertices[this.vertices.findIndex(function(el) { return el.id==id; })];
+}
+
+Graph.prototype.endToEndPaths = function(vA) {
+
   var self=this;
-  hist.push(vA);
-  var queue = this.edges[vA].filter(function(el) {return !hist.includes(el); });
-  if(vA===vB) {
-    console.log("Reached goal: " + self.hist);
-    return self.hist.slice(0);
-  }
+  self.paths=[];
+
+  // get list of all end nodes
+  var endNodes = self.vertices.filter(function(el) {return el.type==="end"} );
+
+  endNodes.forEach(function(el) {
+
+    var history = [];
+    history.push(el.id);
+    var queue = self.edges[el.id];
+
+    queue.forEach(function(q) {
+        self._pathsToLone(q, history.slice(0));
+    });
+  });
+
+  return self.paths;
+}
+
+Graph.prototype._pathsToLone = function(vA, history) {
+
+  var self=this;
+  history.push(vA);
+  var queue = this.edges[vA].filter(function(el) { return !history.includes(el); });
 
   if(queue.length<1) {
-    console.log("No more edges: " + self.hist);
-    return self.hist.slice(0);
+      var v = this.getByID(vA);
+      //console.log(v.type);
+      if(this.getByID(vA).type === "end") {
+        //console.log("Lone vertex: " + history);
+        self.paths.push(history);
+      }
   }
 
-  self.hist.push(queue.forEach(function(el) { self.pathFromTo(el, vB, self.hist.slice(0)); }));
-  return self.hist;
+  queue.forEach(function(el) {
+      self._pathsToLone(el, history.slice(0));
+  })
+
 
 }
 
@@ -226,7 +254,8 @@ function onmousedown(e) {
     }
   }
 
-
+  network.endToEndPaths();
+  console.log(network.paths);
   draw();
   network.print();
 
