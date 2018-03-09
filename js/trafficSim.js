@@ -178,6 +178,26 @@ function draw() {
     }
   }
 
+  // Iterate through the paths, drawing the paths over the numberOfEdges
+
+  var pathWeight = 1 / network.paths.length;
+  for(var i in network.paths) {
+    ctx.beginPath();
+    ctx.lineJoin="round";
+    ctx.lineWidth=20;
+    ctx.moveTo( (network.getByID(network.paths[i][0])).x,
+                (network.getByID(network.paths[i][0])).y);
+    for(var j=1; j<network.paths[i].length; j++) {
+
+      ctx.lineTo( (network.getByID(network.paths[i][j])).x,
+                  (network.getByID(network.paths[i][j])).y);
+
+    }
+
+    ctx.strokeStyle = 'rgba(255, 0, 0, ' + pathWeight +')';
+    ctx.stroke();
+    }
+
   // Iterate through the network, returning the points and drawing appropriate shapes
   for(var i=0; i<network.vertices.length; i++) {
       ctx.beginPath();
