@@ -1,10 +1,10 @@
 function Graph() {
-  this.vertices = [];
-  this.edges = [];
-  this.paths = []; // this is the paths from end node to end node
+  this.vertices = []; // each point aka node, each vertex can join any number of other vertices
+  this.edges = []; // an array of arrays, each array of the vertex id containing adjacent vertices
+  this.paths = []; // this is the paths from each end node to end node
   this.numberOfEdges = [];
   this.idCnt=0;
-  this.selected = -1;
+  this.selected = -1; // if a vertex is currently selected then its id is stored here
 }
 
 /* each vertex object will have the following properties
@@ -37,14 +37,14 @@ Graph.prototype.endToEndPaths = function(vA) {
     var queue = self.edges[el.id];
 
     queue.forEach(function(q) {
-        self._pathsToLone(q, history.slice(0));
+        self._pathsToEnd(q, history.slice(0));
     });
   });
 
   return self.paths;
 }
 
-Graph.prototype._pathsToLone = function(vA, history) {
+Graph.prototype._pathsToEnd = function(vA, history) {
 
   var self=this;
   history.push(vA);
@@ -52,38 +52,16 @@ Graph.prototype._pathsToLone = function(vA, history) {
 
   if(queue.length<1) {
       var v = this.getByID(vA);
-      //console.log(v.type);
       if(this.getByID(vA).type === "end") {
-        //console.log("Lone vertex: " + history);
         self.paths.push(history);
       }
   }
 
   queue.forEach(function(el) {
-      self._pathsToLone(el, history.slice(0));
+      self._pathsToEnd(el, history.slice(0));
   })
 
 
-}
-
-/* Traverse from one point to another, returning all available paths */
-Graph.prototype.pathsFromTo = function(v, vertexB, history) {
-  // cache this function so the callback function works
-  var self = this;
-  // add the current vertext to the history
-  history.push(v);
-  // if we've reached the target then return the history and stop recursing
-  if(v===vertexB)
-    return history;
-  else {
-    // create a queue using all the edges which have not been visited
-    var q = this.edges[v].filter(function(el) { return !history.includes(el); });
-    // recurse on each element in the queue
-    if(q.length<1)
-      return [];
-    else
-      q.forEach(function(el) { self.pathsFromTo(el, vertexB, history); });
-  }
 }
 
 
@@ -93,6 +71,7 @@ Graph.prototype.print = function() {
     return (v.id + ' -> ' + this.edges[v.id].join(', ')).trim();
   }, this).join(' | '));
 }
+
 
 Graph.prototype.addEdge = function(v_id1, v_id2) {
   if(this.edges[v_id1].findIndex(function(el) { return el==v_id2; }) == -1)
@@ -122,7 +101,6 @@ Graph.prototype.addEdge = function(v_id1, v_id2) {
 Graph.prototype.checkPoint = function(tx,ty,tr) {
   for(var i=0; i<this.vertices.length; i++) {
     var r = Math.sqrt((tx-this.vertices[i].x)*(tx-this.vertices[i].x) + (ty-this.vertices[i].y)*(ty-this.vertices[i].y));
-    // console.log(this.vertices[i].id + " " + r);
     if(r<=tr) {
       console.log("Clicked vertext: " + this.vertices[i].id);
       return this.vertices[i].id;
@@ -150,7 +128,6 @@ function draw() {
   var ctx = document.getElementById('canvas').getContext('2d');
   var w = document.getElementById('canvas').width;
   var h = document.getElementById('canvas').height;
-  // console.log("W/h:" + w + "/" + h);
   ctx.clearRect(0,0,w,h);
 
   console.log("Drawing...");
@@ -161,14 +138,10 @@ function draw() {
     var x1 = network.vertices[idx1].x;
     var y1 = network.vertices[idx1].y;
 
-    // console.log("Edge (" + x1 + "," + y1 + ") to (" + network.edges[i].length + ")");
-
     for(var j=0; j<network.edges[i].length; j++) {
       var idx2 = network.vertices.findIndex(function(el) { return el.id==network.edges[i][j]; });
       var x2 = network.vertices[idx2].x;
       var y2 = network.vertices[idx2].y;
-
-      //console.log("Edge (" + x1 + "," + y1 + ") to (" + x2 + "," + y2 + ")");
 
       ctx.beginPath();
       ctx.strokeStyle = '#003300';
@@ -179,7 +152,6 @@ function draw() {
   }
 
   // Iterate through the paths, drawing the paths over the numberOfEdges
-
   var pathWeight = 1 / network.paths.length;
   for(var i in network.paths) {
     ctx.beginPath();
@@ -278,9 +250,6 @@ function onmousedown(e) {
   console.log(network.paths);
   draw();
   network.print();
-
-
-  // add vertices
 
 }
 
