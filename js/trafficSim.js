@@ -121,6 +121,32 @@ function start() {
   ctx.canvas.height = window.innerHeight-25;
   ctx.canvas.onmousedown = onmousedown;
 
+  // add Test vertexes and edges
+  network.addVertex(++network.idCnt, 200, 100); // 1
+  network.addVertex(++network.idCnt, 100, 200); // 2
+  network.addVertex(++network.idCnt, 200, 200); // 3
+  network.addVertex(++network.idCnt, 300, 200); // 4
+  network.addVertex(++network.idCnt, 100, 300); // 5
+  network.addVertex(++network.idCnt, 200, 300); // 6
+  network.addVertex(++network.idCnt, 300, 300); // 7
+  network.addVertex(++network.idCnt, 200, 400); // 8
+
+  network.addEdge(1,3);
+  network.addEdge(2,3);
+  network.addEdge(3,4);
+  network.addEdge(4,6);
+  network.addEdge(2,6);
+  network.addEdge(2,5);
+  network.addEdge(3,5);
+  network.addEdge(3,7);
+  network.addEdge(4,7);
+  network.addEdge(5,6);
+  network.addEdge(6,7);
+  network.addEdge(6,8);
+
+  network.endToEndPaths();
+  draw();
+
 }
 
 function draw() {
