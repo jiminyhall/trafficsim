@@ -208,16 +208,50 @@ function draw() {
         ctx.fillStyle = 'green';
       }
       ctx.fill();
-      ctx.lineWidth = 5;
-      if(network.vertices[i].selected===true) ctx.strokeStyle = 'red';
-      else ctx.strokeStyle = '#003300';
       ctx.stroke();
+      ctx.lineWidth = 5;
+      // check if is selected, make outline red and add a delete circle on the bottom right hand side
+      if(network.vertices[i].selected===true) {
+
+        // make outline red
+        ctx.strokeStyle = 'red';
+        ctx.stroke();
+
+        // draw right select circles
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'black';
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(network.vertices[i].x+radius/1.2, network.vertices[i].y+radius/1.2, radius/2, 0, 2 * Math.PI, false);
+        ctx.fill();
+        ctx.stroke();
+        // draw second circle
+        ctx.beginPath();
+        ctx.arc(network.vertices[i].x-radius/1.2, network.vertices[i].y+radius/1.2, radius/2, 0, 2 * Math.PI, false);
+        ctx.fill();
+        ctx.stroke();
+
+
+        ctx.font = "14px FontAwesome";
+        ctx.fillStyle = "black";
+        ctx.textAlign = "center";
+        ctx.textBaseline="middle";
+        ctx.fillText("\uf00d", network.vertices[i].x+(radius/1.2), network.vertices[i].y+(radius/1.2));
+        ctx.fillText("\uf047", network.vertices[i].x-(radius/1.2), network.vertices[i].y+(radius/1.2));
+
+
+      }
+      else {
+        ctx.strokeStyle = '#003300';
+        ctx.stroke();
+      }
 
       // label vertex
       ctx.font = "10px Comic Sans MS";
       ctx.fillStyle = "black";
       ctx.textAlign = "center";
-      ctx.fillText("V"+network.vertices[i].id, network.vertices[i].x, network.vertices[i].y+5);
+      ctx.textBaseline="middle";
+      ctx.fillText("V"+network.vertices[i].id, network.vertices[i].x, network.vertices[i].y);
   }
 
 }
