@@ -1,3 +1,8 @@
+// Global variables
+
+var network;
+var radius = 20;
+
 function Graph() {
   this.vertices = []; // each point aka node, each vertex can join any number of other vertices
   this.edges = []; // an array of arrays, each array of the vertex id containing adjacent vertices
@@ -14,8 +19,47 @@ function Graph() {
     - type: "lone" (no edges) | "end" (one edge) | "join" (more than one edge)
 */
 Graph.prototype.addVertex = function(id, x, y) {
-  this.vertices.push( {id:id, x:x, y:y, selected:false, type:"lone"} );
+  this.vertices.push( {id:id, x:x, y:y, selected:false, type:"lone",
+                       del_x:x+radius/1.2,
+                       del_y:y+radius/1.2,
+                       del_r:radius/2,
+                       mv_x:x-radius/1.2,
+                       mv_y:y+radius/1.2,
+                       mv_r:radius/2} );
   this.edges[id] = [];
+}
+
+Graph.prototype.deleteVertex = function(id) {
+  // get this index from the id
+  var idx = this.vertices.findIndex(function(el) { return el.id==id; });
+
+  // first remove edges containing this vertex using the edge list
+  var self = this;
+  this.edges[id].forEach(function(e) {
+    var e_idx = self.edges[e].findIndex(function(el) { return el==id; });
+    self.edges[e].splice(e_idx,1);
+    self.numberOfEdges--;
+
+    // check node type
+    if(self.edges[e].length === 0) {
+      var rm_idx = self.vertices.findIndex(function(el) { return el.id==e; });
+      self.vertices[rm_idx].type="lone";
+    }
+    if(self.edges[e].length === 1) {
+      var rm_idx = self.vertices.findIndex(function(el) { return el.id==e; });
+      self.vertices[rm_idx].type="end";
+    }
+
+  });
+
+  // remove the vertex using splice
+  this.vertices.splice(idx, 1);
+
+  // remove vertex from edge list
+  this.edges[id] = [];
+
+  this.print();
+
 }
 
 Graph.prototype.getByID = function(id) {
@@ -68,9 +112,11 @@ Graph.prototype._pathsToEnd = function(vA, history) {
 
 Graph.prototype.print = function() {
   console.log(this.vertices.map(function(v) {
-    return (v.id + ' -> ' + this.edges[v.id].join(', ')).trim();
+    return ("v" + v.id + ' -> ' + this.edges[v.id].join(', ')).trim();
   }, this).join(' | '));
 }
+
+
 
 
 Graph.prototype.addEdge = function(v_id1, v_id2) {
@@ -110,18 +156,17 @@ Graph.prototype.checkPoint = function(tx,ty,tr) {
   return -1;
 }
 
-var network;
-var radius = 20;
+
 
 function start() {
-  console.log("Starting...");
+
   network = new Graph();
   var ctx = document.getElementById('canvas').getContext('2d');
   ctx.canvas.width = window.innerWidth-25;
   ctx.canvas.height = window.innerHeight-25;
   ctx.canvas.onmousedown = onmousedown;
 
-  // add Test vertexes and edges
+  /* add Test vertexes and edges
   network.addVertex(++network.idCnt, 200, 100); // 1
   network.addVertex(++network.idCnt, 100, 200); // 2
   network.addVertex(++network.idCnt, 200, 200); // 3
@@ -144,6 +189,8 @@ function start() {
   network.addEdge(6,7);
   network.addEdge(6,8);
 
+  */
+
   network.endToEndPaths();
   draw();
 
@@ -156,26 +203,33 @@ function draw() {
   var h = document.getElementById('canvas').height;
   ctx.clearRect(0,0,w,h);
 
-  console.log("Drawing...");
+  // For each edge index list, iterate through the vertexes in the list, drawing the edges between vertexes
+  network.edges.forEach(function(edge_list, vtx1_id) {
 
-  // Iterate through the edges, drawing the edges between lines
-  for(var i in network.edges) {
-    var idx1 = network.vertices.findIndex(function(el) { return el.id==i; });
-    var x1 = network.vertices[idx1].x;
-    var y1 = network.vertices[idx1].y;
+    if(edge_list.length>0) {
 
-    for(var j=0; j<network.edges[i].length; j++) {
-      var idx2 = network.vertices.findIndex(function(el) { return el.id==network.edges[i][j]; });
-      var x2 = network.vertices[idx2].x;
-      var y2 = network.vertices[idx2].y;
+      // Get the origin (vtx1) details
+      var vtx1_idx = network.vertices.findIndex(function(v) { return v.id==vtx1_id; });
+      var x1 = network.vertices[vtx1_idx].x;
+      var y1 = network.vertices[vtx1_idx].y;
 
-      ctx.beginPath();
-      ctx.strokeStyle = '#003300';
-      ctx.moveTo(x1,y1);
-      ctx.lineTo(x2,y2);
-      ctx.stroke();
+      // draw an edge between the origin (vtx1) and the vertex in the list (vtx2), for each edge in the list
+      edge_list.forEach(function(vtx2_id) {
+        var vtx2_idx = network.vertices.findIndex(function(v) { return v.id==vtx2_id; });
+        var x2 = network.vertices[vtx2_idx].x;
+        var y2 = network.vertices[vtx2_idx].y;
+
+        ctx.beginPath();
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = '#003300';
+        ctx.moveTo(x1,y1);
+        ctx.lineTo(x2,y2);
+        ctx.stroke();
+      });
     }
-  }
+  });
+
+
 
   // Iterate through the paths, drawing the paths over the numberOfEdges
   var pathWeight = 1 / network.paths.length;
@@ -194,7 +248,8 @@ function draw() {
 
     ctx.strokeStyle = 'rgba(255, 0, 0, ' + pathWeight +')';
     ctx.stroke();
-    }
+  }
+
 
   // Iterate through the network, returning the points and drawing appropriate shapes
   for(var i=0; i<network.vertices.length; i++) {
@@ -208,8 +263,9 @@ function draw() {
         ctx.fillStyle = 'green';
       }
       ctx.fill();
-      ctx.stroke();
       ctx.lineWidth = 5;
+      ctx.strokeStyle = 'black';
+      ctx.stroke();
       // check if is selected, make outline red and add a delete circle on the bottom right hand side
       if(network.vertices[i].selected===true) {
 
@@ -217,17 +273,17 @@ function draw() {
         ctx.strokeStyle = 'red';
         ctx.stroke();
 
-        // draw right select circles
+        // draw right select circle (DELETE)
         ctx.lineWidth = 2;
         ctx.strokeStyle = 'black';
         ctx.fillStyle = 'white';
         ctx.beginPath();
-        ctx.arc(network.vertices[i].x+radius/1.2, network.vertices[i].y+radius/1.2, radius/2, 0, 2 * Math.PI, false);
+        ctx.arc(network.vertices[i].del_x, network.vertices[i].del_y, network.vertices[i].del_r, 0, 2 * Math.PI, false);
         ctx.fill();
         ctx.stroke();
-        // draw second circle
+        // draw left circle (MOVE)
         ctx.beginPath();
-        ctx.arc(network.vertices[i].x-radius/1.2, network.vertices[i].y+radius/1.2, radius/2, 0, 2 * Math.PI, false);
+        ctx.arc(network.vertices[i].mv_x, network.vertices[i].mv_y, network.vertices[i].mv_r, 0, 2 * Math.PI, false);
         ctx.fill();
         ctx.stroke();
 
@@ -272,6 +328,32 @@ function onmousedown(e) {
       - if area clicked is an existing edge and selected then deselect
       - if an existing vertex is selected and area clicked is another vertext then add edge
  */
+
+ // if a node is selected, check if the move or delete icons are hit
+ if(network.selected>0) {
+
+   var j = network.vertices.findIndex(function(el) { return el.id === network.selected; } );
+   // console.log("Move point: " + network.vertices[j].mv_x + "," + network.vertices[j].mv_y);
+
+   var r = Math.sqrt((loc.x-network.vertices[j].mv_x)*(loc.x-network.vertices[j].mv_x) + (loc.y-network.vertices[j].mv_y)*(loc.y-network.vertices[j].mv_y));
+   if(r<=network.vertices[j].mv_r) {
+     console.log("Clicked MOVE button");
+     return;
+   }
+
+   r = Math.sqrt((loc.x-network.vertices[j].del_x)*(loc.x-network.vertices[j].del_x) + (loc.y-network.vertices[j].del_y)*(loc.y-network.vertices[j].del_y));
+   if(r<=network.vertices[j].del_r) {
+     console.log("Clicked DELETE button");
+     network.deleteVertex(network.selected);
+     network.selected=-1;
+     network.endToEndPaths();
+     draw();
+     return;
+   }
+
+
+ }
+
 
  // Checkpoint returns -1 if it does not match a vertex, if it does then it returns the V id
   if(checkPoint===-1) {
