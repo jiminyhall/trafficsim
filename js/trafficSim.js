@@ -29,6 +29,18 @@ Graph.prototype.addVertex = function(id, x, y) {
   this.edges[id] = [];
 }
 
+Graph.prototype.moveVertex = function(id, nx, ny) {
+
+  var idx = this.vertices.findIndex(function(el) { return el.id==id; });
+
+  this.vertices[idx].x -= nx;
+  this.vertices[idx].del_x -= nx;
+  this.vertices[idx].mv_x -= nx;
+  this.vertices[idx].y -= ny;
+  this.vertices[idx].del_y -= ny;
+  this.vertices[idx].mv_y -= ny;
+}
+
 Graph.prototype.deleteVertex = function(id) {
   // get this index from the id
   var idx = this.vertices.findIndex(function(el) { return el.id==id; });
@@ -165,8 +177,10 @@ function start() {
   ctx.canvas.width = window.innerWidth-25;
   ctx.canvas.height = window.innerHeight-25;
   ctx.canvas.onmousedown = onmousedown;
+  ctx.canvas.onmousemove = onmousemove;
+  ctx.canvas.onmouseup = onmouseup;
 
-  /* add Test vertexes and edges
+  // add Test vertexes and edges
   network.addVertex(++network.idCnt, 200, 100); // 1
   network.addVertex(++network.idCnt, 100, 200); // 2
   network.addVertex(++network.idCnt, 200, 200); // 3
@@ -189,7 +203,7 @@ function start() {
   network.addEdge(6,7);
   network.addEdge(6,8);
 
-  */
+
 
   network.endToEndPaths();
   draw();
@@ -312,6 +326,34 @@ function draw() {
 
 }
 
+function onmousemove(e) {
+  // Check for onmousedown when clicked on the move button, then measure the move
+  if(moveVtx>0) {
+    var ctx = document.getElementById('canvas').getContext('2d');
+    var loc = windowToCanvas(ctx.canvas, e.clientX, e.clientY);
+    //console.log("Mouse moved on V" + moveVtx + ": " + loc.x.toFixed(2) + "," + loc.y.toFixed(2));
+
+    // get the difference in position on the drag
+    var diffX = oMoveX - loc.x;
+    var diffY = oMoveY - loc.y;
+
+    // update position of vtx and redraw
+    network.moveVertex(moveVtx, diffX, diffY);
+    oMoveX = loc.x;
+    oMoveY = loc.y;
+    draw();
+  }
+}
+
+
+var moveVtx = -1;
+var oMoveX;
+var oMoveY;
+
+function onmouseup(e) {
+  moveVtx = -1;
+}
+
 function onmousedown(e) {
 
   var ctx = document.getElementById('canvas').getContext('2d');
@@ -338,6 +380,9 @@ function onmousedown(e) {
    var r = Math.sqrt((loc.x-network.vertices[j].mv_x)*(loc.x-network.vertices[j].mv_x) + (loc.y-network.vertices[j].mv_y)*(loc.y-network.vertices[j].mv_y));
    if(r<=network.vertices[j].mv_r) {
      console.log("Clicked MOVE button");
+     moveVtx = network.selected;
+     oMoveX = loc.x;
+     oMoveY = loc.y;
      return;
    }
 
